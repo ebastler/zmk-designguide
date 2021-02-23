@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name kicad-keyboard-parts)(type KiCad)(uri ${KIPRJMOD}/kicad-keyboard-parts.pretty)(options "")(descr ""))
+  (lib (name MX_Only)(type KiCad)(uri ${KIPRJMOD}/MX_Alps_Hybrid/MX_Only.pretty)(options "")(descr ""))
+)
