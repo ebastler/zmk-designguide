@@ -2,9 +2,9 @@
 
 Since [ZMK](https://zmkfirmware.dev/), an open source firmware for (mainly wireless) custom keyboards, is gaining popularity and I have recently designed a board running it ([isometria 75 v2](https://github.com/ebastler/isometria-75/tree/v2)), questions about how to design ZMK compatible hardware have been getting more common. Most keyboard design guides focus heavily on QMK (and QMK compatible MCUs). While ZMK works flawlessly on STM32 (e.G STM32F303) and PCBs for those can be designed the same way as QMK compatible PCBs would be, the main appeal of ZMK is wireless operation, and I will focus on a nRF52840 based design in this guide. Keep in mind, this is no official ZMK team related guide - just a reference implementation from a user, for users. If you notice any errors, please report them either through github, or by contacting me some other way in order for me to fix them.
 
-This is a rather advanced guide that expects some basic electronics knowdledge, as well as design and routing experience. If you do not have those, i would recommend going over the [ai03 PCB design guide](https://wiki.ai03.com/books/pcb-design/page/pcb-guide-part-1---preparations) first. It's an excellent explanation of most basics needed to design your first keyboard.
+This is a rather advanced guide that expects some basic electronics knowdledge, as well as design and routing experience. If you do not have those, i would recommend going over the [ai03 PCB design guide](https://wiki.ai03.com/books/pcb-design/page/pcb-guide-part-1---preparations) first. It's a great explanation of most basics needed to design your first keyboard.
 
-Some symboles and footprints I used in this tutorial (most notably, the MCU) are available in my own library, which can be found [on github](https://github.com/ebastler/kicad-keyboard-parts.pretty). [ai03s switch library](https://github.com/ai03-2725/MX_Alps_Hybrid/) is excellent and included as a submodule as well.
+Some symboles and footprints I used in this tutorial (most notably, the MCU) are available in my own library, which can be found [on github](https://github.com/ebastler/kicad-keyboard-parts.pretty). [ai03's switch library](https://github.com/ai03-2725/MX_Alps_Hybrid/) is excellent and included as a submodule as well.
 
 |isometria 75 pcb| isometria 75 MCU area|
 |----------------|----------------------|
