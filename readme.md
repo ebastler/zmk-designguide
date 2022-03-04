@@ -4,7 +4,14 @@ Since [ZMK](https://zmkfirmware.dev/), an open source firmware for (mainly wirel
 
 This is a rather advanced guide that expects some basic electronics knowdledge, as well as design and routing experience. If you do not have those, i would recommend going over the [ai03 PCB design guide](https://wiki.ai03.com/books/pcb-design/page/pcb-guide-part-1---preparations) first. It's a great explanation of most basics needed to design your first keyboard.
 
-Some symboles and footprints I used in this tutorial (most notably, the MCU) are available in my own library, which can be found [on github](https://github.com/ebastler/kicad-keyboard-parts.pretty). [ai03's switch library](https://github.com/ai03-2725/MX_Alps_Hybrid/) is excellent and included as a submodule as well.
+Some symboles and footprints I used in this tutorial (most notably, the MCU) are available in my own library, which can be found [on github](https://github.com/ebastler/marbastlib). Since my library has a rather odd way to use switches (stabilized footprints consist of a 1u switch + extra stabilizer footprint, backlight LEDs are separate footprints and not part of the switch footprints either) depending on your preferences and workflow, you may prefer [ai03's switch library](https://github.com/ai03-2725/MX_Alps_Hybrid/) which is proven and probably a bit easier to use.
+
+### **I do not assume any responsibility for broken PCBs or damaged derived from errors in this guide. Use at your own risk, and please open an issue or pull-request if you encounter any errors.**
+
+## TODO
+* Update screenshots/explanations to match the slight schematic changes intriduced together with the switch to marbastlib/KiCAD 6
+* Add bypass transistor to TP4056 to de-couple the rest of the keyboard from the battery controller during charging - may avoid some possible issues with end-of-charge detection
+* Add a more advanced battery controller as a more expensive but better alternative
 
 |isometria 75 pcb| isometria 75 MCU area|
 |----------------|----------------------|
