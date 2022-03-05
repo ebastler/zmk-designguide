@@ -6,7 +6,7 @@ This is a rather advanced guide that expects some basic electronics knowdledge, 
 
 Some symboles and footprints I used in this tutorial (most notably, the MCU) are available in my own library, which can be found [on github](https://github.com/ebastler/marbastlib). Since my library has a rather odd way to use switches (stabilized footprints consist of a 1u switch + extra stabilizer footprint, backlight LEDs are separate footprints and not part of the switch footprints either) depending on your preferences and workflow, you may prefer [ai03's switch library](https://github.com/ai03-2725/MX_Alps_Hybrid/) which is proven and probably a bit easier to use.
 
-### **I do not assume any responsibility for broken PCBs or damaged derived from errors in this guide. Use at your own risk, and please open an issue or pull-request if you encounter any errors.**
+### **I do not assume any responsibility for broken PCBs or damages derived from errors in this guide. Use at your own risk, and please open an issue or pull-request if you encounter any errors.**
 
 ## TODO
 * Update screenshots/explanations to match the slight schematic changes intriduced together with the switch to marbastlib/KiCAD 6
