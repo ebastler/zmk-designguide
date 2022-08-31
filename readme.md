@@ -1,10 +1,10 @@
-# ZMK Hardware Design Guide
+# ZMK Hardware Design Guide - Revision 3
 
 Since [ZMK](https://zmkfirmware.dev/), an open source firmware for (mainly wireless) custom keyboards, is gaining popularity and I have recently designed a board running it ([isometria 75 v2](https://github.com/ebastler/isometria-75/tree/v2)), questions about how to design ZMK compatible hardware have been getting more common. Most keyboard design guides focus heavily on QMK (and QMK compatible MCUs). While ZMK works flawlessly on STM32 (e.G STM32F303) and PCBs for those can be designed the same way as QMK compatible PCBs would be, the main appeal of ZMK is wireless operation, and I will focus on a nRF52840 based design in this guide. Keep in mind, this is no official ZMK team related guide - just a reference implementation from a user, for users. If you notice any errors, please report them either through github, or by contacting me some other way in order for me to fix them.
 
 This is a rather advanced guide that expects some basic electronics knowdledge, as well as design and routing experience. If you do not have those, i would recommend going over the [ai03 PCB design guide](https://wiki.ai03.com/books/pcb-design/page/pcb-guide-part-1---preparations) first. It's a great explanation of most basics needed to design your first keyboard.
 
-Some symboles and footprints I used in this tutorial (most notably, the MCU) are available in my own library, which can be found [on github](https://github.com/ebastler/kicad-keyboard-parts.pretty). [ai03's switch library](https://github.com/ai03-2725/MX_Alps_Hybrid/) is excellent and included as a submodule as well.
+The entire example has been shifted from using various other libraries to entirely relying on kicad default libs as well as [marbastlib](https://github.com/ebastler/marbastlib)
 
 |isometria 75 pcb| isometria 75 MCU area|
 |----------------|----------------------|
@@ -12,38 +12,25 @@ Some symboles and footprints I used in this tutorial (most notably, the MCU) are
 
 
 ## Bluetooth keyboard - what do I need?
-This section lists the important parts, as well as some basic considerations. Detailled explanations follow below. There is plenty of compatible parts that work well, some may even work better than the ones I chose. This is, however, focused around parts I am familiar with and have already prototyped to ensure proper operation.
+This section lists the important parts, as well as some basic considerations. Detailed explanations follow below. There is plenty of compatible parts that work well, some may even work better than the ones I chose. This is, however, focused around parts I am familiar with and have already prototyped to ensure proper operation. I will list multiple options, ranging from simpler to more complicated and advanced, usually also more expensive choices. Which is right for you depends on your budget, capabilities and requirements, so I opted for leaving you with multiple choices.
 
 
-### USB Port and protections
-For flashing, possible wired operation and, most importantly, charging, you still need a USB port. I went with a USB-C port. The HRO M12 type connectors are cheap and easy to source, easily hand-solderable and routable and provide great mechanical stability. The protections I chose on this PCB are a good compromise between cost, PCB estate and protections - offering enough protection for a keyboard, while being easy to route. I added a JST 4-pin SH connector as an alternative, which can be used to connect an ai03 unified compatible USB daughterboard.
+* **USB Port and protections**: For flashing, possible wired operation and, most importantly, charging, you still need a USB port. I went with a USB-C port. The HRO M12 and M14 type connectors are cheap and easy to source, easily hand-solderable and routable and provide great mechanical stability. The protections I chose on this PCB are a good compromise between cost, PCB estate and protections - offering enough protection for a keyboard, while being easy to route. I added a JST 4-pin SH connector as an alternative, which can be used to connect an ai03 unified compatible USB daughterboard.
 
 
-### Battery management
-There's lots of different controllers for this application. I mostly went with the TP4056 + DW01A for a few reasons. They are available at jlcpcb for prototyping, easy to route, and offer programmable charge current - allowing me to set it to the maximum USB 2 allows (600 mA). The DW01A would not be necessary, but offers overcurrent, over-charge and over-discharge protections, which is an important addition with Li batteries.
-
-I chose not to include any power switches, due to ZMKs astonishingly low idle power draw, simplifying the routing. The battery and keyboard are connected in parallel to the charge regulator's output, running the board directly off the battery voltage without any "smart switching" between USB and keyboard. This increases power losses in the charge regulator during wired operation, but simplifies the design without any drawbacks during wireless operation.
+* **Battery management**: There's lots of different controllers for this application. I will show you two possible choices, a cheaper and a more expensive (but also more feature-rich one). They both are available at jlcpcb for prototyping, easy to route, and offer programmable charge current - allowing me to set it to the maximum USB 2 allows (600 mA). Power switches are optional, due to ZMKs astonishingly low idle power draw, but examples were included anyway.
 
 
-### Battery 
-Not much to say here. Pick any decent LiIon/LiPo single cell battery that fits your keyboard. More capacity = longer battery life. Try not to poke it with sharp object (switch pins on high-flex plate designs!) or reverse the polarity while connecting it to the PCB if you don't want to burn your house down. Batteries are awful.
+* **Battery**: Not much to say here. Pick any decent LiIon/LiPo single cell battery that fits your keyboard. More capacity = longer battery life. Try not to poke it with sharp objects (switch pins on high-flex plate designs! Ideally add a protective FR4 or Alu plate between battery and switch pins) or reverse the polarity while connecting it to the PCB if you don't want to burn your house down. Batteries are awful.
 
 
-### MCU
-All is based around a Bluetooth enabled, ZephyrOS capable MCU. In my case, I went with an nRF52840 due to good software support and hardware availability, as well as Bluetooth 5 Low Energy capability. To simplify the design and avoid potential legal issues, I picked a ready-made module. There is plenty of modules out there, but I went with a Holyiot 18010 for multiple reasons:
-* Plenty of IO available on castellated side pads, no need for reflow soldering for most boards
-* All necessary IO (USB, supply, SWD) available as castellated side pads
-* CE FCC RoHS certifications, officially recommended by nordic semiconductors
-* Not locked out of the factory - therefore easily flashable with an STlink (OG or clone)
-* Ceramic antenna for overkill range
+* **MCU**: All is based around a Bluetooth enabled, ZephyrOS capable MCU. In my case, I went with an nRF52840 due to good software support and hardware availability, as well as Bluetooth 5 Low Energy capability. I recommend using a dedicated module instead of the bare chip, due to those offering a wide range of certificates (proving your board won't alert the white vans with the big antennas on the roof), and because nRF52840 are rather annoying to route, and it's impossible to reach all pins without 4 layers and microvias, which are serious price-driving options. In this tutorial I will go over two different modules, which each have their pros and cons. There is countless other choices, so I recommend you look for yourself which [of the extensive list](https://www.nordicsemi.com/Nordic-Partners/3rd-party-modules) best fits your needs.
 
 
-### Optional: Voltage sensing
-ZMK supports battery charge reporting over Bluetooth - handy to know how much runtime you have left.
+* **Optional: Voltage sensing**: ZMK supports battery charge reporting over Bluetooth - handy to know how much runtime you have left. Depending on the module you use, and the accuracy you want to achieve, multiple options will be discussed.
 
 
-### Optional: Underglow
-ZMK supports WS2812/SK6812 adressable LEDs for underglow. Additional power cutting circuits that completely cut the LEDs from the supply voltage while turned off are recommended, because those have rather high idle draw at ~1 mA per LED even when turned completely off and will chew through your battery in no time.
+* **Optional: Underglow**: ZMK supports WS2812/SK6812 adressable LEDs for underglow. An additional power cutting circuit that completely cuts the LEDs from the supply voltage while turned off is recommended, because those have rather high idle draw at ~1 mA per LED even when off and will chew through your battery in no time. Unless your design uses beefy batteries, I would recommend omitting LEDs in general - blinking lights are pretty, but months of battery life are even nicer in my opinion. With a power cutting circuit you give the user the option to choose.
 
 
 ## Schematics and design considerations
@@ -51,30 +38,25 @@ ZMK supports WS2812/SK6812 adressable LEDs for underglow. Additional power cutti
 ### USB connectors and protections
 ![USB connector schematic](img/usb-con.png)
 
-J1 is a basic USB Type C 2.0 connector, as used in most modern custom keyboards. R4 and R6 identify the board as a client for Type C hosts (like smartphones or notebooks connected with a C to C cable). L1, together with the input caps of the board, forms a low-pass filter to eliminate incoming HF noise, induced over badly shielded cables or by GPU/CPU VRMs in the PC. An electrostatic discharge applied to keyboard ground, however, must be able to pass to host GND (and therefore, Earth), but would be blocked by the low-pass as well. For this a suppressor diode is placed in parallel, which allows for high voltage discharges to flow freely.
+J1 is a basic USB Type C 2.0 connector, as used in most modern custom keyboards. I recommend using either HRO Type-C-31-M-12 (regular top-mount) or HRO Type-C-31-M-14 (mid-mount). R1 and R2 identify the board as a client for Type C hosts (like smartphones or notebooks connected with a C to C cable). L1, together with the input caps of the board, forms a low-pass filter to eliminate incoming HF noise, induced over badly shielded cables or by GPU/CPU VRMs in the PC. An electrostatic discharge applied to keyboard ground, however, must be able to pass to host GND (and therefore, Earth), but would be blocked by the low-pass as well. For this a suppressor diode is placed in parallel, which allows for high voltage discharges to flow freely.
 
-J2 is a 4pin JST SH connector with the correct pinout to be used with the ai03 unified daughterboard standard. It would for example be compatible with [the various ai03 unified revisions](https://github.com/ai03-2725/Unified-Daughterboard). No ground filtering is present on this connector, since it expected to be done on the DB.
+J2 is a 4pin JST SH connector with the correct pinout to be used with the ai03 unified daughterboard standard. It would for example be compatible with [the various ai03 unified revisions](https://github.com/ai03-2725/Unified-Daughterboard). No ground filtering is present on this connector, since it expected to be done on the daughterboard.
 
 U2 is a cheap and widely used dataline-protector diode + TVS array. It can protect up to 4 data pins (only 2 are used in this case) against voltages higher than VBUS or lower than GND, and the integrated TVS will dissipate any voltage higher than 5 V (or lower than GND) on VBUS. Together with the fuse (F1) this forms an effective protection against over-voltage or reverse-voltage on the supply lines.
 
 
 ### Battery management
-![battery management](img/batt-chg.png)
+#### Simple implementation
+The TP4056 is a very wide-spread chip, available from a variety of brands and easy to implement. It is, however, not suited for powering a circuit while also charging a battery. It measures battery current to determine a fully charged battery, which will lead it to stop charging to avoid damaging the cell. If the keyboard draws additional current, this threshold will be reached later (or not at all), leading to increased battery wear. That's what Q1 is used for - it will power the MCU directly off 5V USB instead of the battery while plugged in.
 
-I used the wide spread TP4056 battery management IC for this schematic. It offers constant-current charging for 1S Li cells, stopping the charge once the threshold of 4.2 Volts is reached. R17 sets the charging current, in this case it is set to a calculated 650 mA, that turned out to be 550-600 mA on my proto PCBs. This is the maximum USB2 ports allow on most devices. 
+#### Advanced implementation
+The BQ24075 is an advanced "PowerPath" chip from Texas instruments. While the TP4056 is a pure battery charging chip, this one includes a whole lot of features. It will dynamically change the battery charging speed to stay within USB limits, depending on how much the board is drawing, and if a board with many LEDs should end up drawing more than 500 mA, it will even use the battery to temporarily supplement the excess current, in order not to overload the USB port. It also has a very useful "sysoff" feature, that can be used to switch the battery off without the whole battery current passing through the microswitch.
 
-D3 and D4 are charge indicators and can be omitted, I would however recommend positioning them in a visible place to see when the board is fully charged.
+The `EN1` and `EN2` pins decide the maximum allowed input current - depending on the configuration it can be 100 mA, 500 mA or "unlimited", where it can be controlled with an external resistor on the `ILIM` pin. Since keyboards are almost always powered by USB 2.0, I opted for the 500 mA limit. Meanwhile, `ISET` is used to choose the charging current. Usually it should be between 0.5C and 1C (for a 500 mAh battery: 250 mA to 500 mA) - refer to your battery datasheet for actual recommended charging currents. The formula is `R = 890 AΩ / U`, where `R` is the necessary resistor value, and `U` the charge current in Ampere. In our example we used `U = 250 mA`, hence `R = 890 AΩ / 0.25 A = 3400 Ω`. Since 3400 Ohm is not part of the widely available E12 resistor scale, we opted for `R = 3.9 kΩ`, which would result in a charging current of roughly 230 mA.
 
-J4 allows for a temperature sensor to be connected to shut off if the battery should overheat. R14 and R16 were calculated for a wide-spread 10 kOhm thermistor type often used in batteries, but I have since lost my calculations (or the thermistor type) and decrypting chinese datasheets without a translation is a pain so I can't tell the exact type anymore. Most cells you can buy of aliexpress etc. are protected anyway, and this is not needed. If JP1 is left alone, the external thermistor is disabled. R14, R16, JP1 and J4 can be replaced by a simple bridge to GND in that case. If the thermistor is intended to be used, JP1 has to be cut open.
+`LED1` is the "power good" indicator, and shows that the chip is being supplied with stable 5 Volt over USB - this can usually be omitted. `LED2` however indicates that the battery is urrently being charged - a very useful information as a user.
 
-DW01A and FS8205 offer overcurrent, overcharge and over-discharge protection, completely cutting the load (and charging circuit) off the battery if any issues are detected. I used the ref implementation from the datasheet of the DW01A without changes.
-
-
-### Voltage regulator
-![voltage regulator](img/vreg.png)
-
-The XC6203 is a easily available SOT23-3 LDO with a particularily low dropout voltage. It should be able to reliably supply the nRF down to battery voltages between 3.35 V and 3.4 V - to a point where the battery has little to no remaining capacity, despite most cells allowing discharges down to 2.8 V or 3 V. C5 and C6 are mandatory according to the datasheet, all others were added by me to create a larger buffer. If you plan on adding underglow and/or backlight, you should add additional capacitors to the VBAT side to buffer PWM-fluctuations.
-
+This slightly more complicated schematic makes use of the optional SYSOFF feature. If `SYSOFF` is connected to VBAT, the chip completely cuts the battery from the rest of the schematic. While this can sometimes be desired, it comes with a problem - it would not charge even when plugged in in this mode, which can be very frustrating if you forget about it. That's what Q2 is for. Q2 will pull `SYSOFF` to GND as soon as the board is plugged in for charging, re-enabling the battery as long as it remains connected to a stable USB power supply.
 
 ### MCU
 ![mcu region](img/mcu.png)
