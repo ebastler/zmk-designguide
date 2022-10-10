@@ -107,23 +107,21 @@ The Moko is a slightly more advanced module, allowing for full HV mode. Quick de
 A dedicated voltage sensing pin is not needed for this schematic, since the nRF52840 can use `VDDH` for voltage sensing as well, all other pins are handled the same way as on the holyiot.
 
 ### Vsense
-![vsense](img/vsense.png)
-
-A voltage divider, used to get the battery voltage down below 3.3 V, allowing the MCU to read the current voltage for battery charge level reporting. These values have been used on the nice!nano before and are somewhat the ZMK default by now.
+![vsense](img/voltage_sensing_simple_1.png) ![vsense](img/voltage_sensing_advanced_1.png)
 
 
 ### Switch matrix
-![switch matrix](img/sw-matrix.png)
+![switch matrix](img/switch_matrix_1.png)
 
-Not much to see here. Just a generic 2x2 switch matrix. I used common cathode SOT-23-3 diodes since I prefer the cleaner look and easier hand solderability of those. Regular 1N4148W or other diodes will work just as well.
+Not much to see here. Just a generic 2x2 switch matrix. I used 1N4148WS, but most signal diodes will work just as well. SOT-23-3 common cathode diodes like BAV70 can help reaching a clean PCB look on ortho/row stagger, but are annoying to use on col stagger boards.
 
 ### Underglow
-![underglow control](img/ug-control.png)
+![underglow control](img/underglow_1.png)
 
-This schematic consists of 2 parts. the left allows us to completely cut supply voltage for the underglow when it is disabled (ZMK does this automatically), saving ~1 mA per LED quiescent current - and therefore increasing battery life by multiple orders of magnitude. If the LEDs are turned off, UG_EN is low, therefore the gate of Q3 is low, and the gate of Q2 is high - this leads to no current flowing anywhere in the circuit. Once UG_EN is high, so is the gate of Q3, which in turn pulls the gate of G2 low. In this state, both 10k resistors allow current flowing to GND, but compared to the LED current the current through both resistors is negligibly small.
+This schematic consists of 2 parts. The left allows us to completely cut supply voltage for the underglow when it is disabled (ZMK does this automatically), saving up to 1 mA per LED quiescent current - and therefore increasing battery life by multiple orders of magnitude. If the LEDs are turned off, `UG_EN` is low, therefore the gate of `Q4` is low, and the gate of `Q3` is high - this leads to no current flowing anywhere in the circuit. Once `UG_EN` is high, so is the gate of `Q4`, which in turn pulls the gate of `G3` low. In this state, both 10k resistors allow current flowing to GND, but compared to the LED current the current through both resistors is negligibly small.
 
-The right schematic is a levelshifter, intended to translate the 3.3 V signal level from the MCU up to Vbat level output voltages. SK6812MINI need 3.4 V for a logical high, while WS2812 only need 0.7 times Vcc, which would be 2.95V on a full Li battery cell. The levelshifter can be omitted, since both LEDs are proven to work with 3.3 V signal level in most cases - I included it for safety since I did not want to run the SK6812MINI out of specs. In case of doubt, check your desired LED's datasheet. Most need 0.7 times Vcc signal level, which can easily be reached without a levelshifter. And all others (like the SK6812MINI) should work without one too, though out-of-spec.
+The right schematic is a levelshifter, intended to translate the 3.3 V signal level from the MCU up to Vbat level output voltages. SK6812MINI need 3.4 V for a logical high, while WS2812 only need 0.7 times Vcc, which would be 2.95V on a full Li battery cell. The WS2812C_2020 used in this example [work with 2.7 V](https://cdn.sparkfun.com/assets/e/1/0/f/b/WS2812C-2020_V1.2_EN_19112716191654.pdf). The levelshifter can usually be omitted, since most types of adressable LEDs are proven to work with 3.3 V signal level - I included it as an example since you may need it to run some LEDs in spec. In case of doubt, check your desired LED's datasheet. Most need 0.7 times Vcc signal level, which can easily be reached without a levelshifter. The WS2812C_2020 used here would not need it either. All others (like SK6812MINI) should work without one too, though out-of-spec. Use at your own risk.
 
-![underglow leds](img/ug-leds.png)
+![underglow leds](img/underglow_2.png)
 
-The LEDs are straightforward - make a chain, connect Vdd to your power source (UG_PWR flag in this case) and the data pin to either UG_HV (if you wanna use the levelshifter) or UG_LV (if you address them directly from the MCU). Don't forget to include the 100 nF cap which most addressable LEDs need and keep it close.
+The LEDs are straightforward - make a chain, connect Vdd to your power source (UG_PWR flag in this case) and the data pin to either UG_HV (if you want to use the levelshifter) or UG_LV (if you address them directly from the MCU). Don't forget to include the 100 nF cap which most addressable LEDs need and keep it close, but double-check with the datasheet. Newer revisions may not need those anymore.
