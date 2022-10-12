@@ -10,8 +10,8 @@ Many symbols (and/or their matching footprints) in this guide are taken from [ma
 
 ## Table of contents
 * [Introduction](#Introduction)
-* [What do I need for a Bluetooth keyboard?](#What-do-I-need-for-a-Bluetooth-keyboard?)
-* [This is too complicated for me!](#This-is-too-complicated-for-me!)
+* [What do I need for a Bluetooth keyboard?](#What-do-I-need-for-a-Bluetooth-keyboard)
+* [This is too complicated for me!](#This-is-too-complicated-for-me)
 * [Schematics and design considerations](#Schematics-and-design-considerations)
     * [USB connector and protections](#USB-connector-and-protections)
     * [Battery management](#Battery-management)
