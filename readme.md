@@ -11,15 +11,14 @@ Many symbols (and/or their matching footprints) in this guide are taken from [ma
 ## Table of contents
 * [Introduction](Introduction)
 * [Bluetooth keyboard - what do I need?](#Bluetooth-keyboard-what-do-I-need?)
-* [This is too complicated for me!](##This-is-too-complicated-for-me!)
+* [This is too complicated for me!](#This-is-too-complicated-for-me!)
 * [Schematics and design considerations](#Schematics-and-design-considerations)
-    * [USB connector and protections](USB-connector-and-protections)
-    * [Battery management](Battery-management)
-    * [MCU](MCU)
-    * [Switch matrix](Switch-matrix)
-    * [Optional - Vsense](Optional-Vsense)
-    * [Optional - Underglow](Optional-Underglow)
-
+    * [USB connector and protections](#USB-connector-and-protections)
+    * [Battery management](#Battery-management)
+    * [MCU](#MCU)
+    * [Switch matrix](#Switch-matrix)
+    * [Optional - Vsense](#Optional-Vsense)
+    * [Optional - Underglow](#Optional-Underglow)
 
 ## Bluetooth keyboard - what do I need?
 This section lists the important parts, as well as some basic considerations. Detailed explanations follow below. There is plenty of compatible parts that work well, some may even work better than the ones I chose. This is, however, focused around parts I am familiar with and have already prototyped to ensure proper operation. I will list multiple options, ranging from simpler to more complicated and advanced, usually also more expensive choices. Which is right for you depends on your budget, capabilities and requirements, so I opted for leaving you with multiple choices.
@@ -38,14 +37,20 @@ This section lists the important parts, as well as some basic considerations. De
 
 
 ## This is too complicated for me!
+[Back to top](#Table-of-contents)
+
 Well, don't despair. There are easier ways of making wireless PCBs - there is multiple Arduino Pro Micro compatible devboards sporting an nRF52840 chip, for example the [nice!nano](https://nicekeyboards.com/nice-nano/), designed by a ZMK team member, nicell. These boards take care of (almost) everything mentioned in this guide for you, enabling you to make a wireless keyboard without bothering with all the crazy tech-talk.
 
 If you are like me, however, and enjoy a challenge, and are up to learning something new - let me be your guide, and show you around the crazy world of wireless keyboards!
 
 ## Schematics and design considerations
+[Back to top](#Table-of-contents)
+
 In the following chapters I will show (tested!) sample schematics for all relevant parts mentioned above, explaining the most important components, as well as my design considerations behind various components.
 
 ### USB connector and protections
+[Back to top](#Table-of-contents)
+
 J1 is a basic USB Type C 2.0 connector, as used in most modern custom keyboards. I recommend using either HRO Type-C-31-M-12 (regular top-mount) or HRO Type-C-31-M-14 (mid-mount) as they are proven, reliable and easy to source. 
 
 R1 and R2 identify the board as a client for Type C hosts (like smartphones or notebooks connected with a C to C cable). The ferrite beads L1 and L2, together with the input caps of the board, forms a low-pass filter to eliminate incoming HF noise, induced over badly shielded cables or by GPU/CPU VRMs in the PC. 
@@ -63,6 +68,8 @@ U2 is a cheap and widely used dataline-protector diode + TVS array. It can prote
 
 ### Battery management
 #### Simple implementation
+[Back to top](#Table-of-contents)
+
 The TP4056 is a very wide-spread chip, available from a variety of brands and easy to implement. It is, however, not suited for powering a circuit while also charging a battery. It measures battery current to determine a fully charged battery, which will lead it to stop charging to avoid damaging the cell. For more information, check out [this blog post](https://www.best-microcontroller-projects.com/tp4056-page2.html). If the keyboard draws additional current, this threshold will be reached later (or not at all), leading to increased battery wear. That's what Q1 is used for - the Shottky diode `D2` will power the MCU directly off 5V USB instead of the battery while plugged in, while during battery powered operation `Q1` serves as an ideal diode (diode without significant forward voltage loss), supplying the MCU off the battery.
 
 ![Simple battery management schematic](img/battery_management_simple_1.png)
@@ -74,6 +81,8 @@ The temperature sensor input is disabled in this implementation, since most cell
 `SW2` is a simple power switch to cut the battery from the system - watch oout that the board will also be unable to charge as long as it is flicked off. In addition, the switch has to withstand the entire battery current - finding a suffieciently small footprint switch that can take up to 500 mA (or, in the case of our example, 250 mA) can prove difficult. If you want to imit the power switch, simply connect `+BATT` directly to `J3`.
 
 #### Advanced implementation
+[Back to top](#Table-of-contents)
+
 The BQ24075 is an advanced "PowerPath" chip from Texas instruments. While the TP4056 is a pure battery charging chip, this one includes a whole lot of features. It will dynamically change the battery charging speed to stay within USB limits, depending on how much the board is drawing, and if a board with many LEDs should end up drawing more than 500 mA, it will even use the battery to temporarily supplement the excess current, in order not to overload the USB port. It also has a very useful "sysoff" feature, that can be used to switch the battery off without the whole battery current passing through the microswitch.
 
 ![Advanced battery management schematic](img/battery_management_advanced_1.png)
@@ -85,6 +94,8 @@ The `PGOOD` pin is the "power good" indicator, and shows that the chip is being 
 This slightly more complicated schematic makes use of the optional SYSOFF feature. If `SYSOFF` is connected to VBAT, the chip completely cuts the battery from the rest of the schematic. While this can sometimes be desired, it comes with a problem - it would not charge even when plugged in in this mode, which can be very frustrating if you forget about it. That's what Q2 is for. Q2 will pull `SYSOFF` to GND as soon as the board is plugged in for charging, re-enabling the battery as long as it remains connected to a stable USB power supply. Unlike the simple implementation, this switch does not have any significant current flowing through it, and can be chosen a lot smaller.
 
 #### Additional battery management considerations
+[Back to top](#Table-of-contents)
+
 When using cylindrical batteries like 18650 cells or unprotected pouches, you should add additional protection circuits, since those do not offer any built-in battery protections like most pouch cells do. If you use regular, protected pouch cells as most boards do, you can skip this section.
 
 ![Additional battery protections](img/battery_management_additional_1.png)
@@ -98,6 +109,8 @@ If this event is triggered through undervoltage or a short circuit, disconnectin
 
 ### MCU
 #### Holyiot 18010
+[Back to top](#Table-of-contents)
+
 As mentioned earlier, this guide will walk you through the use of two modules, the Holyiot 18010 and the Moko mk08a. The main differences between them lie in power supply and solderability. The holyiot has the big advantage that it can entirely be used with castellated side-facing pads, and hence easily be soldered with a soldering iron. As a disadvantage it has incomplete documentation and no exposed `VDDH` pin that would allow for a high voltage suppyly, so it needs an additional voltage regulator - `U6`.
 
 ![mcu region](img/mcu_holyiot_18010_1.png)
@@ -113,6 +126,8 @@ The `VBUS` pin of the module is used for USB plug detection and should be wired 
 `SCL/SDA` are only needed for a more advanced battery charge sensing, and need pins that are not marked as "low frequency I/O" as well.
 
 #### Moko MK08a
+[Back to top](#Table-of-contents)
+
 The Moko is a slightly more advanced module, allowing for full HV mode. Quick detour into nRF52840 power management: The Chip operates at two voltage levels - "VDD" is the voltage level of all peripherals - your IO pins will use this voltage, usually 3.3 V. The core operates at an even lower voltage of usually 1.8 V. Additionally it offers a "VDDH" voltage level, which must be higher than VDD, and up to 5.5 V. Now, the nice part - the chip can generate all voltages directly off VDDH itself - either through interal linear voltage regulators, or even using internal DC-DC regulators for even higher efficiency. These need external capacitors and inductors to work though, and not all modules have those components onboard. The Moko does. Therefore you can directly supply it from battery voltage, and you even get higher efficiency (and battery life) than a Holyiot 18010 module could. Big downside of this (and all other modules with this feature) - it has pads at the bottom that are necessary for operation, so it is impossible to hand solder. While this may not be an issue for a larger production run where everything gets reflowed anyway, it is an issue for a small production at jlcpcb, or a hand soldered design.
 
 ![mcu region](img/mcu_moko_mk08a_1.png)
@@ -122,6 +137,8 @@ The Moko is a slightly more advanced module, allowing for full HV mode. Quick de
 A dedicated voltage sensing pin is not needed for this schematic, since the nRF52840 can use `VDDH` for voltage sensing as well, all other pins are handled the same way as on the holyiot.
 
 ### Switch matrix
+[Back to top](#Table-of-contents)
+
 ![switch matrix](img/switch_matrix_1.png)
 
 Not much to see here. Just a generic 2x2 switch matrix. I used 1N4148WS, but most signal diodes will work just as well. SOT-23-3 common cathode diodes like BAV70 can help reaching a clean PCB look on ortho/row stagger, but are annoying to use on col stagger boards.
@@ -138,6 +155,8 @@ The disadvantage of this approach is, that LiIon cells have non-linear discharge
 ![vsense](img/voltage_sensing_advanced_1.png)
 
 ### Optional - Underglow
+[Back to top](#Table-of-contents)
+
 ![underglow control](img/underglow_1.png)
 
 This schematic consists of 2 parts. The left allows us to completely cut supply voltage for the underglow when it is disabled (ZMK does this automatically), saving up to 1 mA per LED quiescent current - and therefore increasing battery life by multiple orders of magnitude. If the LEDs are turned off, `UG_EN` is low, therefore the gate of `Q4` is low, and the gate of `Q3` is high - this leads to no current flowing anywhere in the circuit. Once `UG_EN` is high, so is the gate of `Q4`, which in turn pulls the gate of `G3` low. In this state, both 10k resistors allow current flowing to GND, but compared to the LED current the current through both resistors is negligibly small.
