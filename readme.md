@@ -1,3 +1,5 @@
+# Please note: This guide in its latest revision has just been published and may contain spelling mistakes as well as explanations referring to wrong components due to being written at an earlier stage, before re-annotation of the schematic. Please report any possible erorrs.
+
 ## Introduction
 
 Since it's launch a few years ago, [ZMK](https://zmkfirmware.dev/), an open source firmware for (mainly wireless) custom keyboards, has grown in both features and userbase rapidly and I have recently designed multiple boards making use of it in the past. Questions about how to design ZMK compatible hardware have been getting more common, and the first edition of my guide was a crude attempt at answering those. The third revision - which is only the second revision of the guide, but based on the third generation of wireless designs I amde - is a more advanced and refined approach. It still contains all Rev 1 circuitry, but with small improvements, and multiple more "advanced" alternative schematic snippets, as well as better explanations and descriptions.
