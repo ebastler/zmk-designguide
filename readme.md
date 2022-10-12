@@ -9,18 +9,18 @@ This is a rather advanced guide that expects some basic electronics knowdledge, 
 Many symbols (and/or their matching footprints) in this guide are taken from [marbastlib](https://github.com/ebastler/marbastlib), a keyboard-focused open source library of kicad footprints and symbols maintained by me and [MarvFPV](https://github.com/marvfpv). While it is possible to use different libraries, I recommend sticking to it, since it's footprints/symbols are tested and confirmed working.
 
 ## Table of contents
-* [Introduction](Introduction)
-* [Bluetooth keyboard - what do I need?](#Bluetooth-keyboard-what-do-I-need?)
+* [Introduction](#Introduction)
+* [What do I need for a Bluetooth keyboard?](#What-do-I-need-for-a-Bluetooth-keyboard?)
 * [This is too complicated for me!](#This-is-too-complicated-for-me!)
 * [Schematics and design considerations](#Schematics-and-design-considerations)
     * [USB connector and protections](#USB-connector-and-protections)
     * [Battery management](#Battery-management)
     * [MCU](#MCU)
     * [Switch matrix](#Switch-matrix)
-    * [Optional - Vsense](#Optional-Vsense)
-    * [Optional - Underglow](#Optional-Underglow)
+    * [Optional - Vsense](#Vsense)
+    * [Optional - Underglow](#Underglow)
 
-## Bluetooth keyboard - what do I need?
+## What do I need for a Bluetooth keyboard?
 This section lists the important parts, as well as some basic considerations. Detailed explanations follow below. There is plenty of compatible parts that work well, some may even work better than the ones I chose. This is, however, focused around parts I am familiar with and have already prototyped to ensure proper operation. I will list multiple options, ranging from simpler to more complicated and advanced, usually also more expensive choices. Which is right for you depends on your budget, capabilities and requirements, so I opted for leaving you with multiple choices.
 
 * **USB Port and protections**: For flashing, possible wired operation and, most importantly, charging, you still need a USB port. I went with a USB-C port. The HRO M12 and M14 type connectors are cheap and easy to source, easily hand-solderable and routable and provide great mechanical stability. The protections I chose on this PCB are a good compromise between cost, PCB estate and protections - offering enough protection for a keyboard, while being easy to route. I added a JST 4-pin SH connector as an alternative, which can be used to connect an ai03 unified compatible USB daughterboard.
@@ -143,7 +143,7 @@ A dedicated voltage sensing pin is not needed for this schematic, since the nRF5
 
 Not much to see here. Just a generic 2x2 switch matrix. I used 1N4148WS, but most signal diodes will work just as well. SOT-23-3 common cathode diodes like BAV70 can help reaching a clean PCB look on ortho/row stagger, but are annoying to use on col stagger boards.
 
-### Optional - Vsense
+### Vsense
 The easiest approach for voltage sensing is measuring the battery voltage directly. On the Holyiot you'll need a voltage divider to get the battery voltage down to safe levels for the MCUs 3.3 V capable GPIOs. For this we use a voltage divider. The values have been used on the [nice!nano v1](https://nicekeyboards.com/nice-nano/) and have since become a de-facto ZMK standard, though changing them is no problem - the values are defined in firmware and can be set to any values. Make sure you stay within a similar range of total resistance and calculate the highest possible output voltage if you decide to change the values, though.
 
 The Moko Mk08a can directly measure VDDH voltage, no divider or dedicated pin is needed for it.
@@ -154,7 +154,7 @@ The disadvantage of this approach is, that LiIon cells have non-linear discharge
 
 ![vsense](img/voltage_sensing_advanced_1.png)
 
-### Optional - Underglow
+### Underglow
 [Back to top](#Table-of-contents)
 
 ![underglow control](img/underglow_1.png)
