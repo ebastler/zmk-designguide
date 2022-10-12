@@ -1,16 +1,24 @@
-# This guide is still work in progress, and not finished. Please do not use it as a reference just yet. Ping me on discord for possible questions regarding the new implementations that will be explained here once ready.
+## Introduction
 
-# ZMK Hardware Design Guide - Revision 3
+Since it's launch a few years ago, [ZMK](https://zmkfirmware.dev/), an open source firmware for (mainly wireless) custom keyboards, has grown in both features and userbase rapidly and I have recently designed multiple boards making use of it in the past. Questions about how to design ZMK compatible hardware have been getting more common, and the first edition of my guide was a crude attempt at answering those. The third revision - which is only the second revision of the guide, but based on the third generation of wireless designs I amde - is a more advanced and refined approach. It still contains all Rev 1 circuitry, but with small improvements, and multiple more "advanced" alternative schematic snippets, as well as better explanations and descriptions.
 
-Since [ZMK](https://zmkfirmware.dev/), an open source firmware for (mainly wireless) custom keyboards, is gaining popularity and I have recently designed a board running it ([isometria 75 v2](https://github.com/ebastler/isometria-75/tree/v2)), questions about how to design ZMK compatible hardware have been getting more common. Most keyboard design guides focus heavily on QMK (and QMK compatible MCUs). While ZMK works flawlessly on STM32 (e.G STM32F303) and PCBs for those can be designed the same way as QMK compatible PCBs would be, the main appeal of ZMK is wireless operation, and I will focus on a nRF52840 based design in this guide. Keep in mind, this is no official ZMK team related guide - just a reference implementation from a user, for users. If you notice any errors, please report them either through github, or by contacting me some other way in order for me to fix them.
+Most keyboard design guides focus heavily on QMK (and QMK compatible MCUs). While ZMK works flawlessly on STM32 (e.G STM32F303) and PCBs for those can be designed the same way as QMK compatible PCBs would be, the main appeal of ZMK is wireless operation, and I will focus on a nRF52840 based design in this guide. Keep in mind, this is no official ZMK team related guide - just a reference implementation from a user, for users. If you notice any errors, please report them either through github, or by contacting me some other way in order for me to fix them.
 
 This is a rather advanced guide that expects some basic electronics knowdledge, as well as design and routing experience. If you do not have those, i would recommend going over the [ai03 PCB design guide](https://wiki.ai03.com/books/pcb-design/page/pcb-guide-part-1---preparations) first. It's a great explanation of most basics needed to design your first keyboard.
 
-The entire example has been shifted from using various other libraries to entirely relying on kicad default libs as well as [marbastlib](https://github.com/ebastler/marbastlib)
+Many symbols (and/or their matching footprints) in this guide are taken from [marbastlib](https://github.com/ebastler/marbastlib), a keyboard-focused open source library of kicad footprints and symbols maintained by me and [MarvFPV](https://github.com/marvfpv). While it is possible to use different libraries, I recommend sticking to it, since it's footprints/symbols are tested and confirmed working.
 
-|isometria 75 pcb| isometria 75 MCU area|
-|----------------|----------------------|
-|![isometria 75](img/isometria.jpg)|![isometria 75](img/isometria_2.png)|
+## Table of contents
+* [Introduction](Introduction)
+* [Bluetooth keyboard - what do I need?](#Bluetooth-keyboard-what-do-I-need?)
+* [This is too complicated for me!](##This-is-too-complicated-for-me!)
+* [Schematics and design considerations](#Schematics-and-design-considerations)
+    * [USB connector and protections](USB-connector-and-protections)
+    * [Battery management](Battery-management)
+    * [MCU](MCU)
+    * [Switch matrix](Switch-matrix)
+    * [Optional - Vsense](Optional-Vsense)
+    * [Optional - Underglow](Optional-Underglow)
 
 
 ## Bluetooth keyboard - what do I need?
@@ -18,20 +26,26 @@ This section lists the important parts, as well as some basic considerations. De
 
 * **USB Port and protections**: For flashing, possible wired operation and, most importantly, charging, you still need a USB port. I went with a USB-C port. The HRO M12 and M14 type connectors are cheap and easy to source, easily hand-solderable and routable and provide great mechanical stability. The protections I chose on this PCB are a good compromise between cost, PCB estate and protections - offering enough protection for a keyboard, while being easy to route. I added a JST 4-pin SH connector as an alternative, which can be used to connect an ai03 unified compatible USB daughterboard.
 
-* **Battery management**: There's lots of different controllers for this application. I will show you two possible choices, a cheaper and a more expensive (but also more feature-rich one). They both are available at jlcpcb for prototyping, easy to route, and offer programmable charge current - allowing to set it to the maximum USB 2.0 allows (600 mA). Power switches are optional, due to ZMKs astonishingly low idle power draw, but examples were included anyway.
+* **Battery management**: There's lots of different controllers for this application. I will show you two possible choices, a cheaper and a more expensive (but also more feature-rich one). They both are available at jlcpcb for prototyping, easy to route, and offer programmable charge current - allowing to set it to the maximum USB 2.0 allows (500 mA). Power switches are optional, due to ZMKs astonishingly low idle power draw, but examples were included anyway. 
 
-* **Battery**: Not much to say here. Pick any decent LiIon/LiPo single cell battery that fits your keyboard. More capacity = longer battery life. Try not to poke it with sharp objects (switch pins on high-flex plate designs! Ideally add a protective FR4 or Alu plate between battery and switch pins) or reverse the polarity while connecting it to the PCB if you don't want to burn your house down. Batteries are awful.
+* **Battery**: Not much to say here. Pick any decent LiIon/LiPo single cell battery that fits your keyboard. More capacity = longer battery life. You can consult the [https://zmk.dev/power-profiler](ZMK Power Profiler) to get a rought estimate of your expected battery life. Try not to poke it with sharp objects (switch pins on high-flex plate designs! Ideally add a protective FR4 or Alu plate between battery and switch pins) or reverse the polarity while connecting it to the PCB if you don't want to burn your house down. Batteries are awful.
 
-* **MCU**: All is based around a Bluetooth enabled, ZephyrOS capable MCU. In my case, I went with an nRF52840 due to good software support and hardware availability, as well as Bluetooth 5 Low Energy capability. I recommend using a dedicated module instead of the bare chip, due to those offering a wide range of certificates (proving your board won't alert the white vans with the big antennas on the roof), because nRF52840 are rather annoying to route, and it's impossible to reach all pins without 4 layers and microvias, which are serious price-driving options. In this tutorial I will go over two different modules, which each have their pros and cons. There is countless other choices, so I recommend you look for yourself which [of the extensive list](https://www.nordicsemi.com/Nordic-Partners/3rd-party-modules) best fits your needs.
+* **MCU**: All is based around a Bluetooth enabled, ZephyrOS capable MCU. In my case, I went with an nRF52840 due to good software support and hardware availability, as well as Bluetooth 5 Low Energy capability. I recommend using a dedicated module instead of the bare chip, due to those offering a wide range of certificates (proving your board won't alert the white vans with the big antennas on the roof), because nRF52840 are rather annoying to route, and it's impossible to reach all pins without 4 layers and microvias, which are serious price-driving options. In this tutorial I will go over two different modules, which each have their pros and cons. There is countless other choices, so I recommend you look for yourself which of the [extensive list of certified modules](https://www.nordicsemi.com/Nordic-Partners/3rd-party-modules) best fits your needs.
 
 * **Optional: Voltage sensing**: ZMK supports battery charge reporting over Bluetooth - handy to know how much runtime you have left. Depending on the module you use, and the accuracy you want to achieve, multiple options will be discussed.
 
 * **Optional: Underglow**: ZMK supports WS2812/SK6812 adressable LEDs for underglow. An additional power cutting circuit that completely cuts the LEDs from the supply voltage while turned off is recommended, because those have rather high idle draw at ~1 mA per LED even when off and will chew through your battery in no time. Unless your design uses beefy batteries, I would recommend omitting LEDs in general - blinking lights are pretty, but months of battery life are even nicer in my opinion. With a power cutting circuit you give the user the option to choose.
 
 
-## Schematics and design considerations
+## This is too complicated for me!
+Well, don't despair. There are easier ways of making wireless PCBs - there is multiple Arduino Pro Micro compatible devboards sporting an nRF52840 chip, for example the [nice!nano](https://nicekeyboards.com/nice-nano/), designed by a ZMK team member, nicell. These boards take care of (almost) everything mentioned in this guide for you, enabling you to make a wireless keyboard without bothering with all the crazy tech-talk.
 
-### USB connectors and protections
+If you are like me, however, and enjoy a challenge, and are up to learning something new - let me be your guide, and show you around the crazy world of wireless keyboards!
+
+## Schematics and design considerations
+In the following chapters I will show (tested!) sample schematics for all relevant parts mentioned above, explaining the most important components, as well as my design considerations behind various components.
+
+### USB connector and protections
 J1 is a basic USB Type C 2.0 connector, as used in most modern custom keyboards. I recommend using either HRO Type-C-31-M-12 (regular top-mount) or HRO Type-C-31-M-14 (mid-mount) as they are proven, reliable and easy to source. 
 
 R1 and R2 identify the board as a client for Type C hosts (like smartphones or notebooks connected with a C to C cable). The ferrite beads L1 and L2, together with the input caps of the board, forms a low-pass filter to eliminate incoming HF noise, induced over badly shielded cables or by GPU/CPU VRMs in the PC. 
@@ -42,7 +56,7 @@ R1 and C3 terminate Shield to Ground of the USB connector - having a low-impedan
 
 ![Schematic of USB Port and protections](img/usb_port_and_protections_1.png)
 
-J2 is a 4pin JST SH connector with the correct pinout to be used with the ai03 unified daughterboard standard. It would for example be compatible with [the various ai03 unified revisions](https://github.com/ai03-2725/Unified-Daughterboard). No ground filtering is present on this connector, since it is expected to be done on the daughterboard.
+J2 is a 4pin JST SH connector with the correct pinout to be used with the ai03 unified daughterboard standard. It would for example be compatible with [the various ai03 unified revisions](https://github.com/ai03-2725/Unified-Daughterboard). No ground filtering is present on this connector, since it is expected to be done on the daughterboard. If you plan on using an early/cheaper version without filtering, connect it before the input filters instead.
 
 U2 is a cheap and widely used dataline-protector diode + TVS array. It can protect up to 4 data pins (only 2 are used in this case, you could use the remaining two for CC1/CC2 datalines) against voltages higher than VBUS or lower than GND, and the integrated TVS will dissipate any voltage higher than 5 V (or lower than GND) on VBUS. Together with the fuse (F1) this forms an effective crowbar-like protection circuit against over-voltage or reverse-voltage on the supply lines.
 
@@ -82,7 +96,8 @@ An additional important protection is an undervoltage/overvoltage cutoff. For th
 If this event is triggered through undervoltage or a short circuit, disconnecting and reconnecting the charger should reset the chip. In the case of overvoltage, you should dispose of the battery, and connect another. 
 
 
-### MCU - Holyiot 18010
+### MCU
+#### Holyiot 18010
 As mentioned earlier, this guide will walk you through the use of two modules, the Holyiot 18010 and the Moko mk08a. The main differences between them lie in power supply and solderability. The holyiot has the big advantage that it can entirely be used with castellated side-facing pads, and hence easily be soldered with a soldering iron. As a disadvantage it has incomplete documentation and no exposed `VDDH` pin that would allow for a high voltage suppyly, so it needs an additional voltage regulator - `U6`.
 
 ![mcu region](img/mcu_holyiot_18010_1.png)
@@ -97,7 +112,7 @@ The `VBUS` pin of the module is used for USB plug detection and should be wired 
 
 `SCL/SDA` are only needed for a more advanced battery charge sensing, and need pins that are not marked as "low frequency I/O" as well.
 
-### MCU - Moko MK08a
+#### Moko MK08a
 The Moko is a slightly more advanced module, allowing for full HV mode. Quick detour into nRF52840 power management: The Chip operates at two voltage levels - "VDD" is the voltage level of all peripherals - your IO pins will use this voltage, usually 3.3 V. The core operates at an even lower voltage of usually 1.8 V. Additionally it offers a "VDDH" voltage level, which must be higher than VDD, and up to 5.5 V. Now, the nice part - the chip can generate all voltages directly off VDDH itself - either through interal linear voltage regulators, or even using internal DC-DC regulators for even higher efficiency. These need external capacitors and inductors to work though, and not all modules have those components onboard. The Moko does. Therefore you can directly supply it from battery voltage, and you even get higher efficiency (and battery life) than a Holyiot 18010 module could. Big downside of this (and all other modules with this feature) - it has pads at the bottom that are necessary for operation, so it is impossible to hand solder. While this may not be an issue for a larger production run where everything gets reflowed anyway, it is an issue for a small production at jlcpcb, or a hand soldered design.
 
 ![mcu region](img/mcu_moko_mk08a_1.png)
@@ -106,16 +121,23 @@ The Moko is a slightly more advanced module, allowing for full HV mode. Quick de
 
 A dedicated voltage sensing pin is not needed for this schematic, since the nRF52840 can use `VDDH` for voltage sensing as well, all other pins are handled the same way as on the holyiot.
 
-### Vsense
-![vsense](img/voltage_sensing_simple_1.png) ![vsense](img/voltage_sensing_advanced_1.png)
-
-
 ### Switch matrix
 ![switch matrix](img/switch_matrix_1.png)
 
 Not much to see here. Just a generic 2x2 switch matrix. I used 1N4148WS, but most signal diodes will work just as well. SOT-23-3 common cathode diodes like BAV70 can help reaching a clean PCB look on ortho/row stagger, but are annoying to use on col stagger boards.
 
-### Underglow
+### Optional - Vsense
+The easiest approach for voltage sensing is measuring the battery voltage directly. On the Holyiot you'll need a voltage divider to get the battery voltage down to safe levels for the MCUs 3.3 V capable GPIOs. For this we use a voltage divider. The values have been used on the [nice!nano v1](https://nicekeyboards.com/nice-nano/) and have since become a de-facto ZMK standard, though changing them is no problem - the values are defined in firmware and can be set to any values. Make sure you stay within a similar range of total resistance and calculate the highest possible output voltage if you decide to change the values, though.
+
+The Moko Mk08a can directly measure VDDH voltage, no divider or dedicated pin is needed for it.
+
+![vsense](img/voltage_sensing_simple_1.png)
+
+The disadvantage of this approach is, that LiIon cells have non-linear discharge curves. They drop to about 4 V quickly, then remain between 3.6 and 4 V for a longer time, and in the end drop off quickly once more. Measuring voltage alone is not enough if you want to have precise battery percentages. There is various fuel gauge chips to make up for that. The [MAX17048](https://datasheets.maximintegrated.com/en/ds/MAX17048-MAX17049.pdf) we use here is a bit of an outlier, since it does not measure current through shunts. Instead it relies on voltage measurments, but combined with advanced algorithms. This allows for an inexpensive, small and easy to integrate chip, that still reaches high accuracy.
+
+![vsense](img/voltage_sensing_advanced_1.png)
+
+### Optional - Underglow
 ![underglow control](img/underglow_1.png)
 
 This schematic consists of 2 parts. The left allows us to completely cut supply voltage for the underglow when it is disabled (ZMK does this automatically), saving up to 1 mA per LED quiescent current - and therefore increasing battery life by multiple orders of magnitude. If the LEDs are turned off, `UG_EN` is low, therefore the gate of `Q4` is low, and the gate of `Q3` is high - this leads to no current flowing anywhere in the circuit. Once `UG_EN` is high, so is the gate of `Q4`, which in turn pulls the gate of `G3` low. In this state, both 10k resistors allow current flowing to GND, but compared to the LED current the current through both resistors is negligibly small.
