@@ -44,7 +44,6 @@ Well, don't despair. There are easier ways of making wireless PCBs - there is mu
 If you are like me, however, and enjoy a challenge, and are up to learning something new - let me be your guide, and show you around the crazy world of wireless keyboards!
 
 ## Schematics and design considerations
-[Back to top](#Table-of-contents)
 
 In the following chapters I will show (tested!) sample schematics for all relevant parts mentioned above, explaining the most important components, as well as my design considerations behind various components.
 
