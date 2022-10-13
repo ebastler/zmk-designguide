@@ -81,7 +81,7 @@ The temperature sensor input is disabled in this implementation, since most cell
 
 `LED1` serves as an indicator for the current charging state, and will be lit as long as the board is actively charging. The `STDBY` does the opposite, an LED connected to it would be off while charging, and turns on when the charge is complete. Both of these pins, paired with a dual-color-LED could be an interesting choice as well - red while charging, green once full.
 
-`SW2` is a simple power switch to cut the battery from the system - watch out that the board will also be unable to charge as long as it is flicked off. In addition, the switch has to withstand the entire battery current - finding a sufficiently small footprint switch that can take up to 500 mA (or, in the case of our example, 250 mA) can prove difficult. If you want to imit the power switch, simply connect `+BATT` directly to `J3`.
+`SW2` is a simple power switch to cut the battery from the system - watch out that the board will also be unable to charge as long as it is flicked off. In addition, the switch has to withstand the entire battery current - finding a sufficiently small footprint switch that can take up to 500 mA (or, in the case of our example, 250 mA) can prove difficult. If you want to omit the power switch, simply connect `+BATT` directly to `J3`.
 
 #### Advanced implementation
 [Back to top](#Table-of-contents)
