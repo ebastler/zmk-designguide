@@ -58,13 +58,13 @@ R1 and R2 identify the board as a client for Type C hosts (like smartphones or n
 
 An electrostatic discharge applied to keyboard ground, however, must be able to pass to host GND (and therefore, Earth), but would be blocked by the low-pass as well. For this a suppressor diode is placed in parallel, which allows for high voltage discharges to flow freely. 
 
-R1 and C3 terminate Shield to Ground of the USB connector - having a low-impedance connection here would create a large ground loop over the whole cable (since on the host they are connected as well), while the capacitor still allows for RF to be shorted to shield. This is a common way of connecting the USB shield, and to be honest I only copied it from others without too much reasoning. It works. Unless you are ready to enter a rabbit hole, avoid googling how to properly handle USB shield. There seem to be as many opinions as there are electrical engineers on the net.
+R3 and C1 terminate Shield to Ground of the USB connector - having a low-impedance connection here would create a large ground loop over the whole cable (since on the host they are connected as well), while the capacitor still allows for RF to be shorted to shield. This is a common way of connecting the USB shield, and to be honest I only copied it from others without too much reasoning. It works. Unless you are ready to enter a rabbit hole, avoid googling how to properly handle USB shield. There seem to be as many opinions as there are electrical engineers on the net.
 
 ![Schematic of USB Port and protections](img/usb_port_and_protections_1.png)
 
 J2 is a 4pin JST SH connector with the correct pinout to be used with the ai03 unified daughterboard standard. It would for example be compatible with [the various ai03 unified revisions](https://github.com/ai03-2725/Unified-Daughterboard). No ground filtering is present on this connector, since it is expected to be done on the daughterboard. If you plan on using an early/cheaper version without filtering, connect it before the input filters instead.
 
-U2 is a cheap and widely used dataline-protector diode + TVS array. It can protect up to 4 data pins (only 2 are used in this case, you could use the remaining two for CC1/CC2 datalines) against voltages higher than VBUS or lower than GND, and the integrated TVS will dissipate any voltage higher than 5 V (or lower than GND) on VBUS. Together with the fuse (F1) this forms an effective crowbar-like protection circuit against over-voltage or reverse-voltage on the supply lines.
+U1 is a cheap and widely used dataline-protector diode + TVS array. It can protect up to 4 data pins (only 2 are used in this case, you could use the remaining two for CC1/CC2 datalines) against voltages higher than VBUS or lower than GND, and the integrated TVS will dissipate any voltage higher than 5 V (or lower than GND) on VBUS. Together with the fuse (F1) this forms an effective crowbar-like protection circuit against over-voltage or reverse-voltage on the supply lines.
 
 
 ### Battery management
