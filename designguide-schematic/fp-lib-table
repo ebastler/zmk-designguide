@@ -1,4 +1,3 @@
 (fp_lib_table
-  (lib (name "marbastlib-various")(type "KiCad")(uri "${KIPRJMOD}/marbastlib/marbastlib-various.pretty")(options "")(descr ""))
-  (lib (name "marbastlib-mx")(type "KiCad")(uri "${KIPRJMOD}/marbastlib/marbastlib-mx.pretty")(options "")(descr ""))
+  (version 7)
 )

@@ -8,7 +8,7 @@ Most keyboard design guides focus heavily on QMK (and QMK compatible MCUs). Whil
 
 This is a rather advanced guide that expects some basic electronics knowledge, as well as design and routing experience. If you do not have those, i would recommend going over the [ai03 PCB design guide](https://wiki.ai03.com/books/pcb-design/page/pcb-guide-part-1---preparations) first. It's a great explanation of most basics needed to design your first keyboard.
 
-Many symbols (and/or their matching footprints) in this guide are taken from [marbastlib](https://github.com/ebastler/marbastlib), a keyboard-focused open source library of kicad footprints and symbols maintained by me and [MarvFPV](https://github.com/marvfpv). While it is possible to use different libraries, I recommend sticking to it, since it's footprints/symbols are tested and confirmed working.
+Many symbols (and/or their matching footprints) in this guide are taken from [marbastlib](https://github.com/ebastler/marbastlib), a keyboard-focused open source library of kicad footprints and symbols maintained by me and [MarvFPV](https://github.com/marvfpv). While it is possible to use different libraries, I recommend sticking to it, since it's footprints/symbols are tested and confirmed working. While it used to be installed as a submodule to the project folder, we have now moved it to the KiCad pakcage manager system with KiCad 7. An installation guide can be found in the repo linked above.
 
 ## Table of contents
 * [Introduction](#Introduction)
