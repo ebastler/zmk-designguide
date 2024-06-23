@@ -54,11 +54,11 @@ In the following chapters I will show (tested!) sample schematics for all releva
 
 J1 is a basic USB Type C 2.0 connector, as used in most modern custom keyboards. I recommend using either HRO Type-C-31-M-12 (regular top-mount) or HRO Type-C-31-M-14 (mid-mount) as they are proven, reliable and easy to source. 
 
-R1 and R2 identify the board as a client for Type C hosts (like smartphones or notebooks connected with a C to C cable). The ferrite beads L1 and L2, together with the input caps of the board, forms a low-pass filter to eliminate incoming HF noise, induced over badly shielded cables or by GPU/CPU voltage regulators in the PC. 
+R1 and R2 identify the board as a client for Type C hosts (like smartphones or notebooks connected with a C to C cable). The ferrite beads L1 and L2, together with the input caps of the board, form a low-pass filter to eliminate incoming HF noise, induced over badly shielded cables or by GPU/CPU voltage regulators in the PC. 
 
 An electrostatic discharge applied to keyboard ground, however, must be able to pass to host GND (and therefore, Earth), but would be blocked by the low-pass as well. For this a suppressor diode is placed in parallel, which allows for high voltage discharges to flow freely. 
 
-R3 and C1 terminate Shield to Ground of the USB connector - having a low-impedance connection here would create a large ground loop over the whole cable (since on the host they are connected as well), while the capacitor still allows for RF to be shorted to shield. This is a common way of connecting the USB shield, and to be honest I only copied it from others without too much reasoning. It works. Unless you are ready to enter a rabbit hole, avoid googling how to properly handle USB shield. There seem to be as many opinions as there are electrical engineers on the net.
+Since the [USB-C specifications](https://www.usb.org/document-library/usb-type-cr-cable-and-connector-specification-release-23) (Table 3-10) state that all cables must internally short shield to connector ground, I have shorted them on the PCB as well, and only used a single ferrite bead with a parallel capacitor as a filter between connector and circuit grounds. Please ground the case to shield/connector ground only, and avoid having the keyboard case connect to circuit ground. 
 
 ![Schematic of USB Port and protections](img/usb_port_and_protections_1.png)
 
@@ -103,7 +103,7 @@ When using cylindrical batteries like 18650 cells or unprotected pouches, you sh
 
 ![Additional battery protections](img/battery_management_additional_1.png)
 
-In this case, adding a temperature sensor would be recommended - with USB 2.0 charging speeds it is basically impossible to overheat a cylindrical cell in common sizes, but additional precautions are always recommended. Sadly this will only work with the TP4056, where you can add 2 resistors and a connector for an external thermistor - for exact values, please consider the datasheet.
+In this case, adding a temperature sensor would be recommended - with USB 2.0 charging speeds it is basically impossible to overheat a cylindrical cell in common sizes, but additional precautions are always recommended (and, if you want to achieve FCC/CE certification, needed). On the TP4056 2 resistors and a connector for an external thermistor must be connected to the `TEMP` pin, instead of shorting it to GND directly. - for exact values, please consider the datasheet. The BQ24075 only expects a single `R = 10 kΩ` thermistor, connected between its `TS` pin and ground (it replaces `R9`).
 
 An additional important protection is an undervoltage/overvoltage cutoff. For this application, the DW01A is a widespread chip, often used together with the TP4056, but it could be added to a BQ24075 schematic as well. The right schematic in the advanced section shows a possible implementation, which replaces the battery connectors present in the simple or advanced implementation. As you can see, the FS8205 double-MOSFET is connected between the negative battery terminal and circuit ground, allowing the DW01A to cut the battery from the board in any possible failsafe-case. 
 
@@ -139,6 +139,16 @@ The Moko is a slightly more advanced module, allowing for full HV mode. Quick de
 
 A dedicated voltage sensing pin is not needed for this schematic, since the nRF52840 can use `VDDH` for voltage sensing as well, all other pins are handled the same way as on the Holyiot.
 
+#### Ebyte E732G4M08S1C
+[Back to top](#Table-of-contents)
+
+The ebyte is a similarly capable module as the Moko, but unlike the Moko does not contain all components needed for DC-DC HV mode. It does, however, have all necessary pins exposed so that we can add the missing components externally - the inductor `L3`, together with the powerstage integrated into the chip, and the etxernal filtering capacitor `C12` gives this module full DC-DC capability. Keep connections between module, `L3` and `C12` as short as possible, in order to keep the loop length of the DC-DC switching node short. An excessive loop length will lead to increased EMI. 
+
+This module also lacks an integrated LF crystal, which needs to be added externally (`Y1`, `C15` and `C16`) in order to benefit from ZMKs deep sleep capabilities, which disable the more power intensive high frequency oscillator.
+
+![mcu region](img/mcu_ebyte_e73_1.png)
+
+
 ### Switch matrix
 [Back to top](#Table-of-contents)
 
@@ -149,13 +159,11 @@ Not much to see here. Just a generic 2x2 switch matrix. I used 1N4148WS, but mos
 ### Vsense
 The easiest approach for voltage sensing is measuring the battery voltage directly. On the Holyiot you'll need a voltage divider to get the battery voltage down to safe levels for the MCUs 3.3 V capable GPIOs. For this we use a voltage divider. The values have been used on the [nice!nano v1](https://nicekeyboards.com/nice-nano/) and have since become a de-facto ZMK standard, though changing them is no problem - the values are defined in firmware and can be set to any values. Make sure you stay within a similar range of total resistance and calculate the highest possible output voltage if you decide to change the values, though.
 
-The Moko Mk08a can directly measure VDDH voltage, no divider or dedicated pin is needed for it.
+The Moko Mk08a and Ebyte E73 in HV mode can directly measure VDDH voltage, no divider or dedicated pin is needed for it.
 
-![vsense](img/voltage_sensing_simple_1.png)
+The disadvantage of this approach is, that LiIon cells have non-linear discharge curves. They drop to about 4 V quickly, then remain between 3.6 and 4 V for a longer time, and in the end drop off quickly once more. Measuring voltage alone is not enough if you want to have precise battery percentages. ZMK does account for these nonlinearities, but dedicated fuel gauge chips which allow for higher accuracy exist as well. The [MAX17048](https://datasheets.maximintegrated.com/en/ds/MAX17048-MAX17049.pdf) we use here is a bit of an outlier, since it does not measure current through shunts (and therefore the mAh charged/consumed). Instead it relies on voltage measurements, but combined with advanced algorithms. This allows for an inexpensive, small and easy to integrate chip, that still reaches high accuracy.
 
-The disadvantage of this approach is, that LiIon cells have non-linear discharge curves. They drop to about 4 V quickly, then remain between 3.6 and 4 V for a longer time, and in the end drop off quickly once more. Measuring voltage alone is not enough if you want to have precise battery percentages. There is various fuel gauge chips to make up for that. The [MAX17048](https://datasheets.maximintegrated.com/en/ds/MAX17048-MAX17049.pdf) we use here is a bit of an outlier, since it does not measure current through shunts. Instead it relies on voltage measurements, but combined with advanced algorithms. This allows for an inexpensive, small and easy to integrate chip, that still reaches high accuracy.
-
-![vsense](img/voltage_sensing_advanced_1.png)
+![vsense](img/voltage_sensing_1.png)
 
 ### Underglow
 [Back to top](#Table-of-contents)
